@@ -1,7 +1,6 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, non_constant_identifier_names
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class MyForgetPassword extends StatefulWidget {
   const MyForgetPassword({super.key});
@@ -11,39 +10,63 @@ class MyForgetPassword extends StatefulWidget {
 }
 
 class _MyForgetPasswordState extends State<MyForgetPassword> {
-  TextEditingController username = TextEditingController();
-  bool? fpassword = false;
-  Future<void> forget_password() async {
-    setState(() {
-      fpassword = true;
-    });
-    await Future.delayed(Duration(seconds: 2));
-    FirebaseAuth.instance
-        .sendPasswordResetEmail(email: username.text.toString());
-    showDialog(
-      context: context,
-      builder: (context) => SizedBox(
-          child: AlertDialog(
-        actions: [
-          Text(
-              "An Password reset request has been sent to your provided Username/Email-Address Please check your inbox "),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() {
-                fpassword = false;
-              });
-            },
-            child: Text("Ok"),
-          )
-        ],
-      )),
-    );
+  final TextEditingController username = TextEditingController();
+  bool isLoading = false;
 
-    setState(() {
-      username.text = "";
-      fpassword = false;
-    });
+  @override
+  void dispose() {
+    username.dispose();
+    super.dispose();
+  }
+
+  Future<void> sendResetEmail() async {
+    final email = username.text.trim();
+    if (email.isEmpty) {
+      Fluttertoast.showToast(msg: "Please enter your email address");
+      return;
+    }
+
+    setState(() => isLoading = true);
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          content: const Text(
+            "A password reset link has been sent to your email address. "
+            "Please check your inbox.",
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pop(context);
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+      username.clear();
+    } on FirebaseAuthException catch (e) {
+      String message;
+      switch (e.code) {
+        case 'user-not-found':
+          message = "No account found with this email.";
+          break;
+        case 'invalid-email':
+          message = "Please enter a valid email address.";
+          break;
+        default:
+          message = "Failed to send reset email. Please try again.";
+      }
+      Fluttertoast.showToast(msg: message);
+    } catch (e) {
+      Fluttertoast.showToast(msg: "An error occurred. Please try again.");
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
   }
 
   @override
@@ -57,21 +80,14 @@ class _MyForgetPasswordState extends State<MyForgetPassword> {
               children: [
                 Container(
                   height: 258,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                       gradient: LinearGradient(
                           colors: [Color(0xFF8E24AA), Color(0xFFFB8C00)])),
                 ),
                 Container(
                   height: 473,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Color.fromARGB(179, 239, 237, 237),
-                  ),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 380,
-                      ),
-                    ],
                   ),
                 ),
               ],
@@ -79,88 +95,96 @@ class _MyForgetPasswordState extends State<MyForgetPassword> {
             Center(
               child: Column(
                 children: [
-                  SizedBox(
-                    height: 130,
-                  ),
+                  const SizedBox(height: 130),
                   Container(
                     width: 405,
-                    margin: EdgeInsets.all(20),
-                    decoration: BoxDecoration(color: Colors.white),
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: 25,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 20, bottom: 20),
-                          child: Text(
+                    margin: const EdgeInsets.all(20),
+                    decoration:
+                        const BoxDecoration(color: Colors.white),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        children: [
+                          const Text(
                             "Forgot Password",
                             style: TextStyle(
-                              fontSize: 32,
-                              color: Colors.teal,
+                              fontSize: 28,
+                              color: Color(0xFF8E24AA),
                               fontWeight: FontWeight.bold,
                             ),
-                            textAlign: TextAlign.right,
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              bottom: 12, left: 12, right: 12),
-                          child: TextField(
+                          const SizedBox(height: 8),
+                          const Text(
+                            "Enter your email to receive a reset link",
+                            style: TextStyle(
+                                fontSize: 13, color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 24),
+                          TextField(
                             controller: username,
-                            decoration: InputDecoration(
-                              hintText: "Username",
-                              labelText: "Username",
-                              labelStyle: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w500),
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: const InputDecoration(
+                              hintText: "Email address",
+                              labelText: "Email",
+                              prefixIcon:
+                                  Icon(Icons.email_outlined),
                               enabledBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.black)),
+                                  borderSide:
+                                      BorderSide(color: Colors.black)),
                             ),
                           ),
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        ElevatedButton(
-                            onPressed: () {
-                              forget_password();
-                            },
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed:
+                                isLoading ? null : sendResetEmail,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
                               padding: EdgeInsets.zero,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius:
+                                    BorderRadius.circular(20),
                               ),
                             ),
                             child: Container(
-                                height: 43,
-                                width: 315,
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(28),
-                                    gradient: LinearGradient(colors: [
-                                      Color(0xFF8E24AA),
-                                      Color(0xFFFB8C00)
-                                    ])),
-                                child: Center(
-                                    child: fpassword == false
-                                        ? Text(
-                                            "Reset Email",
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 19,
-                                                fontWeight: FontWeight.w500),
-                                          )
-                                        : CircularProgressIndicator(
+                              height: 43,
+                              width: 315,
+                              decoration: BoxDecoration(
+                                  borderRadius:
+                                      BorderRadius.circular(28),
+                                  gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFF8E24AA),
+                                        Color(0xFFFB8C00)
+                                      ])),
+                              child: Center(
+                                child: isLoading
+                                    ? const CircularProgressIndicator(
+                                        color: Colors.white)
+                                    : const Text(
+                                        "Send Reset Link",
+                                        style: TextStyle(
                                             color: Colors.white,
-                                          )))),
-                        SizedBox(
-                          height: 25,
-                        ),
-                        SizedBox(
-                          height: 25,
-                        ),
-                      ],
+                                            fontSize: 17,
+                                            fontWeight:
+                                                FontWeight.w500),
+                                      ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: const Text(
+                              "Back to Login",
+                              style: TextStyle(
+                                  color: Color(0xFF8E24AA),
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                      ),
                     ),
                   ),
                 ],

@@ -1,17 +1,11 @@
-// ignore_for_file: unused_import, prefer_const_constructors
-
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/services.dart';
-import 'package:pos/Screen/DashBoard/Forget-Password.dart';
-import 'package:pos/Screen/DashBoard/SignUp.dart';
-import 'package:pos/Screen/DashBoard/dashboard.dart';
-import 'package:pos/Screen/DashBoard/login-page.dart';
+import 'package:pos/Screen/Splash/splash_screen.dart';
+import 'package:pos/theme/app_theme.dart';
 import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -20,11 +14,14 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: loginPage(),
+      title: 'Point of Sale',
+      theme: AppTheme.theme,
+      home: const SplashScreen(),
     );
   }
 }
