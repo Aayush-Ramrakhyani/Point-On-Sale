@@ -179,4 +179,4 @@ This app was built by me as a helping hand for a friend's final year college pro
 
 It is not open-source in the traditional sense. If you'd like to use it, adapt it for your own project, or build something on top of it, feel free to reach out — I'm open to it, just ask first.
 
-**Contact:** amitramrakhyani99@gmail.com
+**Contact:** aayushr7777@gmail.com
