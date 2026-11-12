@@ -175,4 +175,8 @@ Receipt/
 
 ## License
 
-This project was developed as a final year project by students of RC Technical Institute.
+This app was built by me as a helping hand for a friend's final year college project — the goal was to give them a real, working POS system they could present and be proud of.
+
+It is not open-source in the traditional sense. If you'd like to use it, adapt it for your own project, or build something on top of it, feel free to reach out — I'm open to it, just ask first.
+
+**Contact:** amitramrakhyani99@gmail.com
